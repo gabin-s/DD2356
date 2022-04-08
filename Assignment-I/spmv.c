@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
+#define NRUN 100
+
 double mysecond(){
   struct timeval tp;
   struct timezone tzp;
@@ -63,15 +65,29 @@ int main(int argc, char *argv[])
     /* Perform a matrix-vector multiply: y = A*x */
     /* Warning: To use this for timing, you need to (a) handle cold start
        (b) perform enough tests to make timing quantum relatively small */
-    ts = mysecond();
+    
+    // Prevent cold start
     for (row=0; row<nrows; row++) {
-	double sum = 0.0;
-	for (idx=ia[row]; idx<ia[row+1]; idx++) {
-	    sum += a[idx] * x[ja[idx]];
-	}
-	y[row] = sum;
+        double sum = 0.0;
+        for (idx=ia[row]; idx<ia[row+1]; idx++) {
+            sum += a[idx] * x[ja[idx]];
+        }
+        y[row] = sum;
     }
-    t = mysecond() - ts;
+
+    ts = mysecond();
+    // average over NRUN runs
+    for(int i = 0; i < NRUN; i++) {
+        for (row=0; row<nrows; row++) {
+            double sum = 0.0;
+            for (idx=ia[row]; idx<ia[row+1]; idx++) {
+                sum += a[idx] * x[ja[idx]];
+            }
+            y[row] = sum;
+        }
+    }
+    t = (mysecond() - ts) / NRUN;
+
     /* Compute with the result to keep the compiler for marking the
        code as dead */
     for (row=0; row<nrows; row++) {
@@ -79,7 +95,8 @@ int main(int argc, char *argv[])
 	    fprintf(stderr,"y[%d]=%f, fails consistency test\n", row, y[row]);
 	}
     }
-    printf("Time for Sparse Ax, nrows=%d, nnz=%d, T = %f\n", nrows, nnz, t);
+    printf("Time for Sparse Ax, nrows=%d, nnz=%d, T = %f (%f GFLOPS)\n", 
+        nrows, nnz, t, (10 * 1e-9 * nrows / t));
 
     free(ia); free(ja); free(a); free(x); free(y);
     return 0;
