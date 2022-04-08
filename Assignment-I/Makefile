@@ -10,6 +10,9 @@ stream: stream.c
 spmv: spmv.c
 	cc -O2 -o spmv spmv.c
 
+transpose:
+	cc -O2 -o transpose transpose.c
+
 # compile benchmark.c
 benchmark: benchmark.c
 	cc -o benchmark -O2 benchmark.c
@@ -21,6 +24,9 @@ benchmark_asm: benchmark.c
 clockgranularity: clockgranularity.c
 	cc -o clockgranularity clockgranularity.c
 
+<<<<<<< Updated upstream
 transpose: transpose.c
 	cc -O2 -o transpose transpose.c
 
+=======
+>>>>>>> Stashed changes

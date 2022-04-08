@@ -37,8 +37,8 @@ void multiply_matrices()
   int i, j, k;
  
   for (i = 0 ; i < MSIZE ; i++) {
-    for (j = 0 ; j < MSIZE ; j++) {
-      for (k = 0 ; k < MSIZE ; k++) {
+    for (k = 0 ; k < MSIZE ; k++) {
+      for (j = 0 ; j < MSIZE ; j++) {
         matrix_r[i][j] += matrix_a[i][k] * matrix_b[k][j];
       }
     }
