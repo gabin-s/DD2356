@@ -34,27 +34,84 @@ double serial_sum(double *x, size_t size)
     return sum_val;
 }
 
+
 double omp_sum(double *x, size_t size) {
+    double res;
+
+    #pragma omp parallel for
+    for(size_t i = 0; i < size; i++) {
+        res += x[i];
+    }
+
+    return res;
+}
+
+double omp_critical_sum(double *x, size_t size) {
+    double res;
+
+    #pragma omp parallel for
+    for(size_t i = 0; i < size; i++) {
+        #pragma omp critical
+        res += x[i];
+    }
+
+    return res;
+}
+
+
+double omp_local_sum_best(double *x, size_t size) {
     const int max_threads = omp_get_max_threads();
 
     /* Compute partial sums (max_threads partial sums) */
-    double partial_sums[max_threads], res;
+    double res;
 
-    #pragma omp parallel shared(partial_sums)
+    // create an union to pad local sum in memory, to avoid false sharing
+    union {
+        double val;
+        char pad[128];
+    } local_sum[max_threads];
+
+    #pragma omp parallel shared(local_sum)
     {
         int id = omp_get_thread_num();
-        partial_sums[id] = 0;
+        local_sum[id].val = 0;
         
         #pragma omp for
-        for(int i = 0; i < size; i++) {
-            partial_sums[id] += x[i];
+        for(size_t i = 0; i < size; i++) {
+            local_sum[id].val += x[i];
         }
     }
 
     /* Compute the full sum from partial results */
     res = 0;
-    for(int i = 0; i < max_threads; i++) {
-        res += partial_sums[i];
+    for(size_t i = 0; i < max_threads; i++) {
+        res += local_sum[i].val;
+    }
+
+    return res;
+}
+
+double omp_local_sum(double *x, size_t size) {
+    const int max_threads = omp_get_max_threads();
+
+    /* Compute partial sums (max_threads partial sums) */
+    double local_sum[max_threads], res;
+
+    #pragma omp parallel shared(local_sum)
+    {
+        int id = omp_get_thread_num();
+        local_sum[id] = 0;
+        
+        #pragma omp for
+        for(size_t i = 0; i < size; i++) {
+            local_sum[id] += x[i];
+        }
+    }
+
+    /* Compute the full sum from partial results */
+    res = 0;
+    for(size_t i = 0; i < max_threads; i++) {
+        res += local_sum[i];
     }
 
     return res;
@@ -96,18 +153,24 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    printf("size: %d, max threads: %d\n", n, omp_get_max_threads());
+    // printf("size: %d, max threads: %d\n", n, omp_get_max_threads());
     
     double *x, res;
 
     x = malloc(n * sizeof(double));
     generate_random(x, n);
 
-    printf("serial_sum:   ");
+    printf("serial_sum:    ");
     evaluate_fct(serial_sum, x, n);
 
-    printf("omp_sum:      ");
+    printf("omp_sum:       ");
     evaluate_fct(omp_sum, x, n);
+
+    printf("omp_local_sum: ");
+    evaluate_fct(omp_local_sum, x, n);
+
+    printf("omp_local_sum_best: ");
+    evaluate_fct(omp_local_sum_best, x, n);
 
     free(x);
     return 0;
