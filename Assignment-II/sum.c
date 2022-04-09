@@ -166,6 +166,9 @@ int main(int argc, char* argv[]) {
     printf("omp_sum:       ");
     evaluate_fct(omp_sum, x, n);
 
+    printf("omp_critical_sum: ");
+    evaluate_fct(omp_critical_sum, x, n);
+
     printf("omp_local_sum: ");
     evaluate_fct(omp_local_sum, x, n);
 
