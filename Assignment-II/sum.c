@@ -153,7 +153,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // printf("size: %d, max threads: %d\n", n, omp_get_max_threads());
+    printf("size: %d, max threads: %d\n", n, omp_get_max_threads());
     
     double *x, res;
 
