@@ -6,3 +6,6 @@ stream: stream.c
 
 sum: sum.c
 	gcc -fopenmp -lm -o sum sum.c
+
+dftw: DFTW_1.c
+	gcc -fopenmp -lm -o dftw DFTW_1.c
