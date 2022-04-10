@@ -85,6 +85,7 @@ int main(int argc, char *argv[]) {
 // DFT/IDFT routine
 // idft: 1 direct DFT, -1 inverse IDFT (Inverse DFT)
 int DFT(int idft, double *xr, double *xi, double *Xr_o, double *Xi_o, int N) {
+  #pragma omp parallel for
   for (int k = 0; k < N; k++) {
     for (int n = 0; n < N; n++) {
       // Real part of X[k]
