@@ -73,33 +73,38 @@ void laxf_scheme_2d(double *Q, double **ffx, double **ffy, double **nFx, double 
   
   int i, j, k;
 
-  for(i = 1; i < n; i++) {
-    fy(Q, ffy, m, n, i);
+  #pragma omp parallel for schedule(static)
+  for(i = 0; i < n; i++) {
     fx(Q, ffx, m, n, i);
+    fy(Q, ffy, m, n, i);
   }
 
-  #pragma omp parallel for private(i, j, k)
-  for(k = 0; k < cell_size; k++) {
-    /* Calculate and update fluxes in the x-direction */
-    for (i = 1; i < n; i++) {
+  /* Calculate and update fluxes in the x-direction */
+  for (i = 1; i < n; i++) {
+    #pragma omp parallel private(j, k)
+    {
+      #pragma omp for
       for (j = 1; j < m; j++) 
-        nFx[k][j] = 0.5 * ((ffx[k][j-1] + ffx[k][j]) -
-            dx/dt * (Q(k, j, i) - Q(k, j-1, i)));
-  
-      for (j = 1; j < m-1; j++)
-        Q(k, j, i) = Q(k, j, i)  - dt/dx * ((nFx[k][j+1] - nFx[k][j]));
-    }
+        for(k = 0; k < cell_size; k++)
+          nFx[k][j] = 0.5 * ((ffx[k][j-1] + ffx[k][j]) -
+              dx/dt * (Q(k, j, i) - Q(k, j-1, i))); // x
 
-    /* Calculate and update fluxes in the y-direction */
-    for (i = 1; i < m; i++) {
+      #pragma omp for
+      for (j = 1; j < m-1; j++)
+        for(k = 0; k < cell_size; k++)
+          Q(k, j, i) = Q(k, j, i) - dt/dx * ((nFx[k][j+1] - nFx[k][j])); // x
+
+      #pragma omp for
+      for (j = 1; j < m; j++) 
+        for(k = 0; k < cell_size; k++)
+          nFy[k][j] = 0.5 * ((ffy[k][j-1] + ffy[k][j]) - 
+              dy/dt * (Q(k, i, j) - Q(k, i, j -1))); // y
       
-      for (j = 1; j < n; j++)
-        nFy[k][j] = 0.5 * ((ffy[k][j-1] + ffy[k][j]) - 
-          dy/dt * (Q(k, i, j) - Q(k, i, j -1)));
-      
-      for (j = 1; j <  n-1; j++) 
-        Q(k,i,j) = Q(k,i,j) -  dt/dy * ((nFy[k][j+1]  -  nFy[k][j]));
-    }
+      #pragma omp for
+      for (j = 1; j < m-1; j++)
+        for(k = 0; k < cell_size; k++)
+          Q(k, i, j) = Q(k, i, j) - dt/dy * ((nFy[k][j+1]  -  nFy[k][j])); // y
+    } 
   }
 }
 
@@ -122,7 +127,7 @@ void solver(double *Q, double **ffx, double **ffy, double **nFx, double **nFy,
     {
       /* Apply boundary condition */
       int j, k;
-      #pragma omp for
+      #pragma omp for schedule(static)
       for (j = 1; j < n - 1 ; j++) {
         for (k = 0; k < cell_size; k++) {
           Q(k, 0, j) = bc_mask[k] *  Q(k, 1, j);
@@ -130,13 +135,13 @@ void solver(double *Q, double **ffx, double **ffy, double **nFx, double **nFy,
         }
       }
     
-      #pragma omp for
+      #pragma omp for schedule(static)
       for (j = 0; j < m; j++)  {
         for (k = 0; k < cell_size; k++) {
           Q(k, j, 0) = bc_mask[k] * Q(k, j, 1);
           Q(k, j, n-1) = bc_mask[k] * Q(k, j, n-2);
         }
-      }  
+      }
     }
     
     /* Update all volumes with the Lax-Friedrich's scheme */     
@@ -195,9 +200,11 @@ int main(int argc, char **argv) {
   double dx, dt, epsi, delta, dy, tend, tmp, stime, etime;
   
 
-  /* Use m volumes in the x-direction and n volumes in the y-direction */    
-  m = 1000;
-  n = 1000;
+  /* Use m volumes in the x-direction and n volumes in the y-direction */
+  m = 100;
+  n = 100;
+
+  if(argc == 2) m = n = atoi(argv[1]);
   
   /*
     epsi      Parameter used for initial condition
