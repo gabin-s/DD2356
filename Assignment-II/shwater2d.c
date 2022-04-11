@@ -36,8 +36,9 @@ void validate(double *Q, int m, int n) {
 	}
 }
 
+
 /* Flux function in the x-direction */
-void fx(double *Q, double **fq, int m, int n, int j) {  
+/* void fx(double *Q, double **fq, int m, int n, int j) {  
   int i;
   const double g = 9.81;
 
@@ -47,11 +48,10 @@ void fx(double *Q, double **fq, int m, int n, int j) {
       (g * pow(Q(0, i, j), 2)) / 2.0;
     fq[2][i] = (Q(1, i, j) * Q(2, i, j)) / Q(0, i, j);
   }
-  
-}
+} */
 
 /* Flux function in the y-direction */
-void fy(double *Q, double **fq, int m, int n, int i) {
+/* void fy(double *Q, double **fq, int m, int n, int i) {
   int j;
   const double g= 9.81;
 
@@ -61,7 +61,7 @@ void fy(double *Q, double **fq, int m, int n, int i) {
     fq[2][j] = (pow(Q(2, i, j), 2) / Q(0, i, j))  + 
       (g * pow(Q(0, i, j), 2)) / 2.0;
   }
-}
+} */
 
 
 /*
@@ -71,40 +71,57 @@ void fy(double *Q, double **fq, int m, int n, int i) {
 void laxf_scheme_2d(double *Q, double **ffx, double **ffy, double **nFx, double **nFy,
 		    int m, int n, double dx, double dy, double dt) {
   
-  int i, j, k;
+  const double g = 9.81;
+  #pragma omp parallel
+  {
+    int i, j, k, l;
 
-  #pragma omp parallel for schedule(static)
-  for(i = 0; i < n; i++) {
-    fx(Q, ffx, m, n, i);
-    fy(Q, ffy, m, n, i);
-  }
+    /* Calculate and update fluxes in the x-direction */
+    for (i = 1; i < n; i++) {
+        //fx(Q, ffx, m, n, i);
+        #pragma omp for schedule(static)
+        for (l = 0; l < m; l++) {
+          ffx[0][l] = Q(1, l, i);
+          ffx[1][l] = (pow(Q(1, l, i), 2) / Q(0, l, i))  + 
+            (g * pow(Q(0, l, i), 2)) / 2.0;
+          ffx[2][l] = (Q(1, l, i) * Q(2, l, i)) / Q(0, l, i);
+        }
 
-  /* Calculate and update fluxes in the x-direction */
-  for (i = 1; i < n; i++) {
-    #pragma omp parallel private(j, k)
-    {
-      #pragma omp for
-      for (j = 1; j < m; j++) 
-        for(k = 0; k < cell_size; k++)
-          nFx[k][j] = 0.5 * ((ffx[k][j-1] + ffx[k][j]) -
-              dx/dt * (Q(k, j, i) - Q(k, j-1, i))); // x
+        #pragma omp for schedule(static)
+        for (j = 1; j < m; j++) 
+          for (k = 0; k < cell_size; k++) 
+            nFx[k][j] = 0.5 * ((ffx[k][j-1] + ffx[k][j]) -
+                       dx/dt * (Q(k, j, i) - Q(k, j-1, i))); // x
 
-      #pragma omp for
-      for (j = 1; j < m-1; j++)
-        for(k = 0; k < cell_size; k++)
-          Q(k, j, i) = Q(k, j, i) - dt/dx * ((nFx[k][j+1] - nFx[k][j])); // x
+        #pragma omp for schedule(static)
+        for (j = 1; j < m-1; j++)
+          for (k = 0; k < cell_size;  k++) 
+            Q(k, j, i) = Q(k, j, i) - dt/dx * ((nFx[k][j+1] - nFx[k][j])); // x
+    }
 
-      #pragma omp for
-      for (j = 1; j < m; j++) 
-        for(k = 0; k < cell_size; k++)
-          nFy[k][j] = 0.5 * ((ffy[k][j-1] + ffy[k][j]) - 
+    /* Calculate and update fluxes in the y-direction */
+    for (i = 1; i < n; i++) {
+        //fx(Q, ffy, m, n, i);
+        #pragma omp for schedule(static)
+        for (l = 0; l < m; l++) {
+          ffy[0][l] = Q(2, i, l);
+          ffy[1][l] = (Q(1, i, l) * Q(2, i, l)) / Q(0, i, l);    
+          ffy[2][l] = (pow(Q(2, i, l), 2) / Q(0, i, l))  + 
+            (g * pow(Q(0, i, l), 2)) / 2.0;
+        }
+
+        #pragma omp for schedule(static)
+        for (j = 1; j < m; j++) 
+          for (k = 0; k < cell_size; k++) 
+            nFy[k][j] = 0.5 * ((ffy[k][j-1] + ffy[k][j]) - 
               dy/dt * (Q(k, i, j) - Q(k, i, j -1))); // y
-      
-      #pragma omp for
-      for (j = 1; j < m-1; j++)
-        for(k = 0; k < cell_size; k++)
-          Q(k, i, j) = Q(k, i, j) - dt/dy * ((nFy[k][j+1]  -  nFy[k][j])); // y
-    } 
+                       
+        #pragma omp for schedule(static)
+        for (j = 1; j < m-1; j++)
+          for (k = 0; k < cell_size;  k++) 
+            Q(k, i, j) = Q(k, i, j) - dt/dy * ((nFy[k][j+1] - nFy[k][j])); // y
+    }
+
   }
 }
 
@@ -123,24 +140,19 @@ void solver(double *Q, double **ffx, double **ffy, double **nFx, double **nFy,
   steps = ceil(tend / dt); 
 
   for (i = 0, time = 0.0; i < steps; i++, time += dt) {
-    #pragma omp parallel
-    {
-      /* Apply boundary condition */
-      int j, k;
-      #pragma omp for schedule(static)
-      for (j = 1; j < n - 1 ; j++) {
-        for (k = 0; k < cell_size; k++) {
-          Q(k, 0, j) = bc_mask[k] *  Q(k, 1, j);
-          Q(k, m-1, j) = bc_mask[k] *  Q(k, m-2, j);
-        }
+    /* Apply boundary condition */
+    int j, k;
+    for (j = 1; j < n - 1 ; j++) {
+      for (k = 0; k < cell_size; k++) {
+        Q(k, 0, j) = bc_mask[k] *  Q(k, 1, j);
+        Q(k, m-1, j) = bc_mask[k] *  Q(k, m-2, j);
       }
-    
-      #pragma omp for schedule(static)
-      for (j = 0; j < m; j++)  {
-        for (k = 0; k < cell_size; k++) {
-          Q(k, j, 0) = bc_mask[k] * Q(k, j, 1);
-          Q(k, j, n-1) = bc_mask[k] * Q(k, j, n-2);
-        }
+    }
+  
+    for (j = 0; j < m; j++)  {
+      for (k = 0; k < cell_size; k++) {
+        Q(k, j, 0) = bc_mask[k] * Q(k, j, 1);
+        Q(k, j, n-1) = bc_mask[k] * Q(k, j, n-2);
       }
     }
     
