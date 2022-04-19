@@ -11,4 +11,4 @@ dftw: DFTW_1.c
 	gcc -fopenmp -lm -o dftw DFTW_1.c
 
 shwater2d: shwater2d.c
-	gcc -fopenmp -lm -o shwater2d shwater2d.c
+	gcc -Wall -g -fopenmp -lm -o shwater2d shwater2d.c
