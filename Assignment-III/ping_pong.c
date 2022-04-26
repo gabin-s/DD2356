@@ -45,32 +45,30 @@ int main(int argc, char *argv[])
 		int tag2 = 20;
 	
 		int loop_count = 50;
+		
+		MPI_Win win;
+
+		int soi = sizeof(int);
+  		MPI_Win_create(A, soi*N, soi, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
 
 		// Warm-up loop
 		for(int i=1; i<=5; i++){
-			if(rank == 0){
-				MPI_Send(A, N, MPI_DOUBLE, 1, tag1, MPI_COMM_WORLD);
-				MPI_Recv(A, N, MPI_DOUBLE, 1, tag2, MPI_COMM_WORLD, &stat);
-			}
-			else if(rank == 1){
-				MPI_Recv(A, N, MPI_DOUBLE, 0, tag1, MPI_COMM_WORLD, &stat);
-				MPI_Send(A, N, MPI_DOUBLE, 0, tag2, MPI_COMM_WORLD);
-			}
+			MPI_Win_fence(0, win);
+			MPI_Get(A, N, MPI_DOUBLE, 1-rank,
+					0, N, MPI_DOUBLE, win);
+			MPI_Win_fence(0, win); //Sync to make sure the get is complete
 		}
 
 		// Time ping-pong for loop_count iterations of data transfer size 8*N bytes
+
 		double start_time, stop_time, elapsed_time;
 		start_time = MPI_Wtime();
-	
+
 		for(int i=1; i<=loop_count; i++){
-			if(rank == 0){
-				MPI_Send(A, N, MPI_DOUBLE, 1, tag1, MPI_COMM_WORLD);
-				MPI_Recv(A, N, MPI_DOUBLE, 1, tag2, MPI_COMM_WORLD, &stat);
-			}
-			else if(rank == 1){
-				MPI_Recv(A, N, MPI_DOUBLE, 0, tag1, MPI_COMM_WORLD, &stat);
-				MPI_Send(A, N, MPI_DOUBLE, 0, tag2, MPI_COMM_WORLD);
-			}
+			MPI_Win_fence(0, win);
+			MPI_Get(A, N, MPI_DOUBLE, 1-rank,
+					0, N, MPI_DOUBLE, win);
+			MPI_Win_fence(0, win); //Sync to make sure the get is complete
 		}
 
 		stop_time = MPI_Wtime();
