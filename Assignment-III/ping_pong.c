@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 		// Warm-up loop
 		for(int i=1; i<=5; i++){
 			MPI_Win_fence(0, win);
-			MPI_Get(A, N, MPI_DOUBLE, 0,
+			MPI_Get(A, N, MPI_DOUBLE, rank,
 					0, N, MPI_DOUBLE, win);
 			MPI_Win_fence(0, win); //Sync to make sure the get is complete
 		}
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 
 		for(int i=1; i<=loop_count; i++){
 			MPI_Win_fence(0, win);
-			MPI_Get(A, N, MPI_DOUBLE, 0,
+			MPI_Get(A, N, MPI_DOUBLE, rank,
 					0, N, MPI_DOUBLE, win);
 			MPI_Win_fence(0, win); //Sync to make sure the get is complete
 		}
