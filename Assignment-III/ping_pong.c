@@ -47,7 +47,6 @@ int main(int argc, char *argv[])
 		int loop_count = 50;
 		
 		MPI_Win win;
-
 		int soi = sizeof(int);
   		MPI_Win_create(A, soi*N, soi, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
 
@@ -66,7 +65,7 @@ int main(int argc, char *argv[])
 
 		for(int i=1; i<=loop_count; i++){
 			MPI_Win_fence(0, win);
-			MPI_Get(A, N, MPI_DOUBLE, 1-rank,
+			MPI_Get(A, N, MPI_DOUBLE, 0,
 					0, N, MPI_DOUBLE, win);
 			MPI_Win_fence(0, win); //Sync to make sure the get is complete
 		}
