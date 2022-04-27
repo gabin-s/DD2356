@@ -101,6 +101,7 @@ void mpi_matmul(int M, int s_N, int rank, number_t *A, number_t *B) {
     const int m = M / s_N;
     const int N = s_N * s_N;
 
+
     // allocate buffers
     number_t* A_tile = (number_t*)malloc(m * m * sizeof(number_t));
     number_t* B_tile = (number_t*)malloc(m * m * sizeof(number_t));
@@ -114,8 +115,8 @@ void mpi_matmul(int M, int s_N, int rank, number_t *A, number_t *B) {
     tile_copy(m, s_N, rank, A_tile, A);
     tile_copy(m, s_N, rank, B_tile, B);
 
-    printf("r%d, m=%d, s_N=%d, A=%f, B=%f, C=%f\n", m, s_N, rank, *A_tile, *B_tile, *C_tile);
-    print_matrix(m, A_tile);
+
+    // printf("r%d, m=%d, s_N=%d, A=%f, B=%f, C=%f\n", m, s_N, rank, *A_tile, *B_tile, *C_tile);
 
     // create a new communicator for the row
     div_t colorkey = div(rank, s_N);
@@ -189,6 +190,7 @@ int main(int argc, char* argv[]) {
         exit(0);
     }
     
+
     // -- generate random input matrices --
     M = atoi(argv[1]);
     A = (number_t*) malloc(M * M * sizeof(number_t));
@@ -227,6 +229,8 @@ int main(int argc, char* argv[]) {
     }
 
     start_time = MPI_Wtime();
+    
+    printf("r%d, s_N=%d\n", rank, s_N);
     mpi_matmul(M, s_N, rank, A, B);
 
     if(rank == 0) {
