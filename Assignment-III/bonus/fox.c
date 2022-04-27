@@ -169,7 +169,7 @@ int main(int argc, char* argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &N);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    if(argc < 2) {
+    if(argc != 2) {
         if(rank == 0)
             fprintf(stderr, "usage: %s M\n", argv[0]);
         fail(2);
