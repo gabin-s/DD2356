@@ -29,20 +29,17 @@ int main(int argc, char *argv[])
 		Loop from 8 B to 1 GB
 	--------------------------------------------------------------------------------------------*/
 
+
+	// Allocate memory for A on CPU
+	double *A = (double*)malloc((1 << 28)*sizeof(double));
+	
+	// Initialize all elements of A to 0.0
+	for(int i=0; i<(1 << 28); i++){
+		A[i] = 0.0;
+	}
+
 	for(int i=0; i<=27; i++){
-
 		long int N = 1 << i;
-	
-   	 	// Allocate memory for A on CPU
-		double *A = (double*)malloc(N*sizeof(double));
-
-		// Initialize all elements of A to 0.0
-		for(int i=0; i<N; i++){
-			A[i] = 0.0;
-		}
-	
-		int tag1 = 10;
-		int tag2 = 20;
 	
 		int loop_count = 50;
 		
@@ -86,10 +83,13 @@ int main(int argc, char *argv[])
 			for(int i = 1; i <= 2*(5 + loop_count); i++)
 				MPI_Win_fence(0, win);
 		}
-
+		
 		MPI_Win_free(&win);
 	}
 
+
+	free(A);
+	
 	MPI_Finalize();
 
 	return 0;
