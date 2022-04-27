@@ -47,39 +47,47 @@ int main(int argc, char *argv[])
 		int loop_count = 50;
 		
 		MPI_Win win;
-		int soi = sizeof(int);
-		MPI_Win_create(A, soi*N, soi, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+		int sod = sizeof(double);
+		MPI_Win_create(A, sod*N, sod, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
 
-		// Warm-up loop
-		for(int i=1; i<=5; i++){
-			MPI_Win_fence(0, win);
-			MPI_Get(A, N, MPI_DOUBLE, 1-rank,
-					0, N, MPI_DOUBLE, win);
-			MPI_Win_fence(0, win);
-		}
+		if(rank == 0) {
 
-		// Time ping-pong for loop_count iterations of data transfer size 8*N bytes
+			// Warm-up loop
+			for(int i=1; i<=5; i++){
+				MPI_Win_fence(0, win);
+				MPI_Get(A, N, MPI_DOUBLE, 1-rank,
+						0, N, MPI_DOUBLE, win);
+				MPI_Win_fence(0, win);
+			}
 
-		double start_time, stop_time, elapsed_time;
-		start_time = MPI_Wtime();
+			// Time ping-pong for loop_count iterations of data transfer size 8*N bytes
 
-		for(int i=1; i<=loop_count; i++){	
-			MPI_Win_fence(0, win);
-			MPI_Get(A, N, MPI_DOUBLE, 1-rank,
-					0, N, MPI_DOUBLE, win);
-			MPI_Win_fence(0, win);
-		}
+			double start_time, stop_time, elapsed_time;
+			start_time = MPI_Wtime();
 
-		stop_time = MPI_Wtime();
-		elapsed_time = stop_time - start_time;
+			for(int i=1; i<=loop_count; i++){	
+				MPI_Win_fence(0, win);
+				MPI_Get(A, N, MPI_DOUBLE, 1-rank,
+						0, N, MPI_DOUBLE, win);
+				MPI_Win_fence(0, win);
+			}
 
-		long int num_B = 8*N;
-		long int B_in_GB = 1 << 30;
-		double num_GB = (double)num_B / (double)B_in_GB;
-		double avg_time_per_transfer = elapsed_time / (2.0*(double)loop_count);
+			stop_time = MPI_Wtime();
+			elapsed_time = stop_time - start_time;
 
-		if(rank == 0)
+			long int num_B = 8*N;
+			long int B_in_GB = 1 << 30;
+			double num_GB = (double)num_B / (double)B_in_GB;
+			double avg_time_per_transfer = elapsed_time / (2.0*(double)loop_count);
+
 			printf("%10li\t%15.9f\n", num_B, avg_time_per_transfer);
+		}
+		else if(rank == 1) {
+			for(int i=1; i<=loop_count*10; i++){	
+				MPI_Win_fence(0, win);
+				MPI_Win_fence(0, win);
+			}
+		}
 
 		MPI_Win_free(&win);
 		free(A);
