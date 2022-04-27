@@ -51,13 +51,12 @@ int main(int argc, char *argv[])
 		MPI_Win_create(A, sod*N, sod, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
 
 		if(rank == 0) {
-			// lock the other process
-			MPI_Win_lock(MPI_LOCK_EXCLUSIVE, 1, 0, win);
-
 			// Warm-up loop
 			for(int i=1; i<=5; i++){
+				MPI_Win_fence(0, win);
 				MPI_Get(A, N, MPI_DOUBLE, 1,
 						0, N, MPI_DOUBLE, win);
+				MPI_Win_fence(0, win);
 			}
 
 			// Time ping-pong for loop_count iterations of data transfer size 8*N bytes
@@ -66,14 +65,14 @@ int main(int argc, char *argv[])
 			start_time = MPI_Wtime();
 
 			for(int i=1; i<=loop_count; i++){	
+				MPI_Win_fence(0, win);
 				MPI_Get(A, N, MPI_DOUBLE, 1,
 						0, N, MPI_DOUBLE, win);
+				MPI_Win_fence(0, win);
 			}
 
 			stop_time = MPI_Wtime();
 			elapsed_time = stop_time - start_time;
-
-			MPI_Win_unlock(1, win);
 
 			long int num_B = 8*N;
 			long int B_in_GB = 1 << 30;
@@ -81,7 +80,11 @@ int main(int argc, char *argv[])
 			double avg_time_per_transfer = elapsed_time / (2.0*(double)loop_count);
 
 			printf("%10li\t%15.9f\n", num_B, avg_time_per_transfer);
-
+		}
+		else if (rank == 1) {
+			
+			for(int i = 1; i <= 2*(5 + loop_count); i++)
+				MPI_Win_fence(0, win); 	// synchronize
 		}
 
 		MPI_Win_free(&win);
