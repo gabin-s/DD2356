@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
     stop_time = MPI_Wtime();
     
     if(rank == 0)
-        printf("%d %f\n", size, stop_time - start_time);        
+        printf("pi=%f, t=%f\n", pi, stop_time - start_time);        
 
     MPI_Finalize();
     return 0;
