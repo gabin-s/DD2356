@@ -29,13 +29,8 @@ int main(int argc, char *argv[])
 		Loop from 8 B to 1 GB
 	--------------------------------------------------------------------------------------------*/
 
-	// Allocate memory for A on CPU
-	double *A = (double*)malloc((1 << 27)*sizeof(double));
-	
-	// Initialize all elements of A to 0.0
-	for(int i=0; i<(1 << 27); i++){
-		A[i] = 0.0;
-	}
+	// Allocate memory for A on CPU, filled with zeros
+	double *A = (double*)calloc((1 << 27), sizeof(double));
 
 	for(int i=0; i<=27; i++){
 		long int N = 1 << i;
