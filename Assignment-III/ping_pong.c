@@ -29,7 +29,6 @@ int main(int argc, char *argv[])
 		Loop from 8 B to 1 GB
 	--------------------------------------------------------------------------------------------*/
 
-
 	// Allocate memory for A on CPU
 	double *A = (double*)malloc((1 << 28)*sizeof(double));
 	
@@ -39,6 +38,7 @@ int main(int argc, char *argv[])
 	}
 
 	for(int i=0; i<=27; i++){
+		prinf("%d\n", i)
 		long int N = 1 << i;
 	
 		int loop_count = 50;
@@ -86,7 +86,6 @@ int main(int argc, char *argv[])
 		
 		MPI_Win_free(&win);
 	}
-
 
 	free(A);
 	
