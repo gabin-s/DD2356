@@ -25,19 +25,7 @@ int main(int argc, char* argv[])
     srand(rank * SEED);
     
     double start_time, stop_time, elapsed_time;
-	start_time = MPI_Wtime();
-
-    // Calculate PI following a Monte Carlo method
-    for (int iter = 0; iter < NUM_ITER / size; iter++)
-    {
-        // Generate random (X,Y) points
-        x = (double)random() / (double)RAND_MAX;
-        y = (double)random() / (double)RAND_MAX;
-        z = sqrt((x*x) + (y*y));
-        
-        // Check if point is in unit circle
-        if (z <= 1.0) local_count++;
-    }    
+	start_time = MPI_Wtime();    
 
     if(rank == 0) {
         int counts[size - 1];
@@ -46,6 +34,19 @@ int main(int argc, char* argv[])
         for(int i = 1; i < size; i++) {
             MPI_Irecv(&counts[i - 1], 1, MPI_INT, i, TAG, MPI_COMM_WORLD, &requests[i - 1]);
         }
+
+        // Calculate PI following a Monte Carlo method
+        for (int iter = 0; iter < NUM_ITER / size; iter++)
+        {
+            // Generate random (X,Y) points
+            x = (double)random() / (double)RAND_MAX;
+            y = (double)random() / (double)RAND_MAX;
+            z = sqrt((x*x) + (y*y));
+            
+            // Check if point is in unit circle
+            if (z <= 1.0) local_count++;
+        }    
+
         MPI_Waitall(size - 1, requests, MPI_STATUSES_IGNORE);
 
         // sum all results
@@ -58,6 +59,18 @@ int main(int argc, char* argv[])
         pi = ((double)total_count / (double)NUM_ITER) * 4.0;
     }
     else {
+
+        // Calculate PI following a Monte Carlo method
+        for (int iter = 0; iter < NUM_ITER / size; iter++)
+        {
+            // Generate random (X,Y) points
+            x = (double)random() / (double)RAND_MAX;
+            y = (double)random() / (double)RAND_MAX;
+            z = sqrt((x*x) + (y*y));
+            
+            // Check if point is in unit circle
+            if (z <= 1.0) local_count++;
+        }
         MPI_Send(&local_count, 1, MPI_INT, /* dest */ 0, TAG, MPI_COMM_WORLD);
     }
 
