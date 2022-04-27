@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 			// Warm-up loop
 			for(int i=1; i<=5; i++){
 				MPI_Win_fence(0, win);
-				MPI_Get(A, N, MPI_DOUBLE, 1-rank,
+				MPI_Get(A, N, MPI_DOUBLE, 1,
 						0, N, MPI_DOUBLE, win);
 				MPI_Win_fence(0, win);
 			}
@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
 
 			for(int i=1; i<=loop_count; i++){	
 				MPI_Win_fence(0, win);
-				MPI_Get(A, N, MPI_DOUBLE, 1-rank,
+				MPI_Get(A, N, MPI_DOUBLE, 1,
 						0, N, MPI_DOUBLE, win);
 				MPI_Win_fence(0, win);
 			}
@@ -83,10 +83,8 @@ int main(int argc, char *argv[])
 			printf("%10li\t%15.9f\n", num_B, avg_time_per_transfer);
 		}
 		else if(rank == 1) {
-			for(int i=1; i<=loop_count*10; i++){	
+			for(int i=1; i <= 2*(5+loop_count); i++)
 				MPI_Win_fence(0, win);
-				MPI_Win_fence(0, win);
-			}
 		}
 
 		MPI_Win_free(&win);
