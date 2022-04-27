@@ -47,10 +47,11 @@ int main(int argc, char *argv[])
 		int loop_count = 50;
 		
 		MPI_Win win;
-		int soi = sizeof(int);
-		MPI_Win_create(A, soi*N, soi, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+		int sod = sizeof(double);
+		if(rank == 1)
+			MPI_Win_create(A, sod*N, sod, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
 		
-		if(rank == 0) {
+		else if(rank == 0) {
 
 			// Warm-up loop
 			for(int i=1; i<=5; i++){
