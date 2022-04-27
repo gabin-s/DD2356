@@ -29,11 +29,11 @@ int main(int argc, char *argv[])
 		Loop from 8 B to 1 GB
 	--------------------------------------------------------------------------------------------*/
 
-	long int maxN = (1 << 27);
+	long int maxN = (1 << 26);
 	double *send = (double*)calloc(maxN, sizeof(double));  // send buffer
 	double *recv = (double*)malloc(maxN * sizeof(double)); // receive buffer
 
-	for(int i=0; i<=27; i++){
+	for(int i=0; i<=26; i++) {
 		long int N = 1 << i;
 	
 		int loop_count = 50;
