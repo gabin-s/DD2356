@@ -6,6 +6,7 @@
 
 #define TAG_SENDRECV 123
 #define TAG_SYNC 456
+#define SEED 42
 
 #define MPI_NUMBER_T MPI_DOUBLE
 typedef double number_t;
@@ -94,13 +95,12 @@ void tile_replace(int m, int s_N, int rank, number_t *dst, number_t *src) {
     int offset = m*(qr.rem + s_N*m*qr.quot);
 
     for(int i = 0; i < m; i++)
-        memcpy(&dst[offset + m*s_N*i], &src[m*i], m*sizeof(number_t));
+        memcpy(dst + offset + m*s_N*i], src + m*i, m*sizeof(number_t));
 }
 
 void mpi_matmul(int M, int s_N, int rank, number_t *A, number_t *B) {
     const int m = M / s_N;
     const int N = s_N * s_N;
-
 
     // allocate buffers
     number_t* A_tile = (number_t*)malloc(m * m * sizeof(number_t));
@@ -197,6 +197,7 @@ int main(int argc, char* argv[]) {
     B = (number_t*) malloc(M * M * sizeof(number_t));
     if(A == NULL || B == NULL) fail(3);
 
+    srand(SEED);
     generate_rand(M, A);
     generate_rand(M, B);
     // -- -- 
