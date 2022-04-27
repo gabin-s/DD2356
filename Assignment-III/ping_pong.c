@@ -82,9 +82,14 @@ int main(int argc, char *argv[])
 			printf("%10li\t%15.9f\n", num_B, avg_time_per_transfer);
 		}
 		else if (rank == 1) {
-			
-			for(int i = 1; i <= 2*(5 + loop_count); i++)
+			for(int i = 1; i <= 5; i++) {
 				MPI_Win_fence(0, win); 	// synchronize
+				MPI_Win_fence(0, win); 	// synchronize
+			}
+			for(int i = 1; i <= loop_count; i++) {
+				MPI_Win_fence(0, win); 	// synchronize
+				MPI_Win_fence(0, win); 	// synchronize
+			}
 		}
 
 		MPI_Win_free(&win);
