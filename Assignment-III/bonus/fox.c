@@ -95,7 +95,7 @@ void tile_replace(int m, int s_N, int rank, number_t *dst, number_t *src) {
     int offset = m*(qr.rem + s_N*m*qr.quot);
 
     for(int i = 0; i < m; i++)
-        memcpy(dst + offset + m*s_N*i], src + m*i, m*sizeof(number_t));
+        memcpy(dst + offset + m*s_N*i, src + m*i, m*sizeof(number_t));
 }
 
 void mpi_matmul(int M, int s_N, int rank, number_t *A, number_t *B) {
