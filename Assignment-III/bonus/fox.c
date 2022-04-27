@@ -233,7 +233,7 @@ int main(int argc, char* argv[]) {
         number_t *C = (number_t*) malloc(M*M*sizeof(number_t));
         if(C == NULL) fail(5);
 
-        MPI_Waitall(N, &requests[0], MPI_STATUS_IGNORE);
+        MPI_Waitall(N, requests, MPI_STATUS_IGNORE);
 
         for(int src = 0; src < N; src++) {
             // replace tile in C
