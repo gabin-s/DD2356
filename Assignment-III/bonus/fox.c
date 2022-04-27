@@ -214,7 +214,8 @@ int main(int argc, char* argv[]) {
     MPI_Request *requests;
 
     if(rank == 0) {
-        requests = malloc(N*sizeof(MPI_Request));
+        requests = (MPI_Request*) malloc(N*sizeof(MPI_Request));
+        if(requests == NULL) fail(8);
 
         for(int src = 0; src < N; src++) {
             C_tiles[src] = (number_t*) malloc(m*m*sizeof(number_t));
@@ -235,7 +236,7 @@ int main(int argc, char* argv[]) {
         number_t *C = (number_t*) malloc(M*M*sizeof(number_t));
         if(C == NULL) fail(5);
 
-        MPI_Waitall(N, requests, MPI_STATUS_IGNORE);
+        MPI_Waitall(N, requests, MPI_STATUSES_IGNORE);
 
         for(int src = 0; src < N; src++) {
             // replace tile in C
