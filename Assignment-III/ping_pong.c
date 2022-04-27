@@ -48,10 +48,9 @@ int main(int argc, char *argv[])
 		
 		MPI_Win win;
 		int sod = sizeof(double);
-		if(rank == 1)
-			MPI_Win_create(A, sod*N, sod, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
-		
-		else if(rank == 0) {
+		MPI_Win_create(A, sod*N, sod, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+
+		if(rank == 0) {
 
 			// Warm-up loop
 			for(int i=1; i<=5; i++){
