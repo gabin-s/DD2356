@@ -29,59 +29,53 @@ int main(int argc, char *argv[])
 		Loop from 8 B to 1 GB
 	--------------------------------------------------------------------------------------------*/
 
-	// Allocate memory for A on CPU, filled with zeros
-	double *A = (double*)calloc((1 << 27), sizeof(double));
+	long int maxN = (1 << 27);
+	double *send = (double*)calloc(maxN, sizeof(double));  // send buffer
+	double *recv = (double*)malloc(maxN * sizeof(double)); // receive buffer
 
 	for(int i=0; i<=27; i++){
 		long int N = 1 << i;
 	
 		int loop_count = 50;
 		
-		int sod = sizeof(double);
 		MPI_Win win;
-		MPI_Win_create(A, sod*N, sod, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+		MPI_Win_create(send, sizeof(double)*N, sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
 
-		if(rank == 0) {
-			// Warm-up loop
-			for(int i=1; i<=5; i++){
-				MPI_Win_fence(0, win);
-				MPI_Get(A, N, MPI_DOUBLE, 1-rank,
-						0, N, MPI_DOUBLE, win);
-				MPI_Win_fence(0, win);
-			}
-
-			// Time ping-pong for loop_count iterations of data transfer size 8*N bytes
-
-			double start_time, stop_time, elapsed_time;
-			start_time = MPI_Wtime();
-
-			for(int i=1; i<=loop_count; i++){	
-				MPI_Win_fence(0, win);
-				MPI_Get(A, N, MPI_DOUBLE, 1-rank,
-						0, N, MPI_DOUBLE, win);
-				MPI_Win_fence(0, win);
-			}
-
-			stop_time = MPI_Wtime();
-			elapsed_time = stop_time - start_time;
-
-			long int num_B = 8*N;
-			long int B_in_GB = 1 << 30;
-			double num_GB = (double)num_B / (double)B_in_GB;
-			double avg_time_per_transfer = elapsed_time / (2.0*(double)loop_count);
-
-			if(rank == 0)
-				printf("%10li\t%15.9f\n", num_B, avg_time_per_transfer);
+		// Warm-up loop
+		for(int i=1; i<=5; i++){
+			MPI_Win_fence(0, win);
+			MPI_Get(recv, N, MPI_DOUBLE, 1-rank,
+					0, N, MPI_DOUBLE, win);
+			MPI_Win_fence(0, win);
 		}
-		else if(rank == 1) {
-			for(int i = 1; i <= 2*(5 + loop_count); i++)
-				MPI_Win_fence(0, win);
+
+		// Time ping-pong for loop_count iterations of data transfer size 8*N bytes
+		double start_time, stop_time, elapsed_time;
+		start_time = MPI_Wtime();
+
+		for(int i=1; i<=loop_count; i++){	
+			MPI_Win_fence(0, win);
+			MPI_Get(recv, N, MPI_DOUBLE, 1-rank,
+					0, N, MPI_DOUBLE, win);
+			MPI_Win_fence(0, win);
 		}
+
+		stop_time = MPI_Wtime();
+		elapsed_time = stop_time - start_time;
+
+		long int num_B = 8*N;
+		long int B_in_GB = 1 << 30;
+		double num_GB = (double)num_B / (double)B_in_GB;
+		double avg_time_per_transfer = elapsed_time / (2.0*(double)loop_count);
+
+		if(rank == 0)
+			printf("%10li\t%15.9f\n", num_B, avg_time_per_transfer);
 		
 		MPI_Win_free(&win);
 	}
 
-	free(A);
+	free(send);
+	free(recv);
 	
 	MPI_Finalize();
 
