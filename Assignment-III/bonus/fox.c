@@ -115,6 +115,7 @@ void mpi_matmul(int M, int s_N, int rank, number_t *A, number_t *B) {
     tile_copy(m, s_N, rank, B_tile, B);
 
     printf("r%d, A=%f, B=%f, C=%f\n", rank, *A_tile, *B_tile, *C_tile);
+    print_matrix(m, A);
 
     // create a new communicator for the row
     div_t colorkey = div(rank, s_N);
@@ -236,7 +237,7 @@ int main(int argc, char* argv[]) {
         number_t *C = (number_t*) malloc(M*M*sizeof(number_t));
         if(C == NULL) fail(5);
 
-        MPI_Waitall(N, requests, (MPI_Status*) MPI_STATUSES_IGNORE);
+        MPI_Waitall(N, requests, MPI_STATUSES_IGNORE);
 
         for(int src = 0; src < N; src++) {
             // replace tile in C
