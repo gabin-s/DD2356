@@ -29,17 +29,16 @@ int main(int argc, char *argv[])
 		Loop from 8 B to 1 GB
 	--------------------------------------------------------------------------------------------*/
 
-	long int maxN = (1 << 26);
+	long int maxN = (1 << 27);
 	double *send = (double*)calloc(maxN, sizeof(double));  // send buffer
 	double *recv = (double*)malloc(maxN * sizeof(double)); // receive buffer
 
-	for(int i=0; i<=26; i++) {
+	MPI_Win win;
+	MPI_Win_create(send, sizeof(double)*maxN, sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+
+	for(int i=0; i<=27; i++){
 		long int N = 1 << i;
-	
-		int loop_count = 50;
-		
-		MPI_Win win;
-		MPI_Win_create(send, sizeof(double)*N, sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+		int loop_count = 50;	
 
 		// Warm-up loop
 		for(int i=1; i<=5; i++){
@@ -71,11 +70,11 @@ int main(int argc, char *argv[])
 		if(rank == 0)
 			printf("%10li\t%15.9f\n", num_B, avg_time_per_transfer);
 		
-		MPI_Win_free(&win);
 	}
 
-	free(send);
 	free(recv);
+	free(send);
+	MPI_Win_free(&win);
 	
 	MPI_Finalize();
 
