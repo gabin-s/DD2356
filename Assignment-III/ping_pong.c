@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 	}
 
 	for(int i=0; i<=27; i++){
-		prinf("%d\n", i);
+		printf("%d\n", i);
 		long int N = 1 << i;
 	
 		int loop_count = 50;
