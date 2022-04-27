@@ -51,6 +51,7 @@ int main(int argc, char *argv[])
 		if(rank == 1)
 			MPI_Win_create(A, soi*N, soi, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
 		else {
+
 			// Warm-up loop
 			for(int i=1; i<=5; i++){
 				MPI_Win_fence(0, win);
@@ -73,15 +74,14 @@ int main(int argc, char *argv[])
 
 			stop_time = MPI_Wtime();
 			elapsed_time = stop_time - start_time;
+
+			long int num_B = 8*N;
+			long int B_in_GB = 1 << 30;
+			double num_GB = (double)num_B / (double)B_in_GB;
+			double avg_time_per_transfer = elapsed_time / (2.0*(double)loop_count);
+
+			printf("%10li\t%15.9f\n", num_B, avg_time_per_transfer);
 		}
-
-		long int num_B = 8*N;
-		long int B_in_GB = 1 << 30;
-		double num_GB = (double)num_B / (double)B_in_GB;
-		double avg_time_per_transfer = elapsed_time / (2.0*(double)loop_count);
-
-		if(rank == 0) printf("%10li\t%15.9f\n", num_B, avg_time_per_transfer);
-
 
 		MPI_Win_free(&win);
 		free(A);
