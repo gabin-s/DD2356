@@ -48,12 +48,13 @@ int main(int argc, char *argv[])
 		
 		MPI_Win win;
 		int soi = sizeof(int);
-		MPI_Win_create(A, soi*N, soi, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+		if(rank == 1)
+			MPI_Win_create(A, soi*N, soi, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
 
 		// Warm-up loop
 		for(int i=1; i<=5; i++){
 			MPI_Win_fence(0, win);
-			MPI_Get(A, N, MPI_DOUBLE, 1,
+			MPI_Get(A, N, MPI_DOUBLE, 0,
 					0, N, MPI_DOUBLE, win);
 			MPI_Win_fence(0, win); //Sync to make sure the get is complete
 		}
@@ -65,7 +66,7 @@ int main(int argc, char *argv[])
 
 		for(int i=1; i<=loop_count; i++){
 			MPI_Win_fence(0, win);
-			MPI_Get(A, N, MPI_DOUBLE, 1,
+			MPI_Get(A, N, MPI_DOUBLE, 0,
 					0, N, MPI_DOUBLE, win);
 			MPI_Win_fence(0, win); //Sync to make sure the get is complete
 		}
