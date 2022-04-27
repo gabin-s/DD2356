@@ -32,6 +32,9 @@ int main(int argc, char *argv[])
 	long int maxN = 1 << 27;
 	double *A = (double*)calloc(maxN, sizeof(double));  // send buffer
 
+	for(int i=0; i < maxN; i++)
+		A[i] = rand();
+
 	MPI_Win win;
 	MPI_Win_create(A, sizeof(double)*maxN, sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
 
@@ -68,7 +71,6 @@ int main(int argc, char *argv[])
 
 		if(rank == 0)
 			printf("%10li\t%15.9f\n", num_B, avg_time_per_transfer);
-	
 	}
 
 	MPI_Win_free(&win);
