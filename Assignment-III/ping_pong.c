@@ -47,17 +47,16 @@ int main(int argc, char *argv[])
 		int loop_count = 50;
 		
 		MPI_Win win;
-		int sod = sizeof(double);
-		MPI_Win_create(A, sod*N, sod, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+		int soi = sizeof(int);
+		MPI_Win_create(A, soi*N, soi, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
 
 		if(rank == 0) {
-
 			// Warm-up loop
 			for(int i=1; i<=5; i++){
 				MPI_Win_fence(0, win);
 				MPI_Get(A, N, MPI_DOUBLE, 1,
 						0, N, MPI_DOUBLE, win);
-				MPI_Win_fence(0, win); //Sync to make sure the get is complete
+				MPI_Win_fence(0, win);
 			}
 
 			// Time ping-pong for loop_count iterations of data transfer size 8*N bytes
@@ -65,11 +64,11 @@ int main(int argc, char *argv[])
 			double start_time, stop_time, elapsed_time;
 			start_time = MPI_Wtime();
 
-			for(int i=1; i<=loop_count; i++){
+			for(int i=1; i<=loop_count; i++){	
 				MPI_Win_fence(0, win);
 				MPI_Get(A, N, MPI_DOUBLE, 1,
 						0, N, MPI_DOUBLE, win);
-				MPI_Win_fence(0, win); //Sync to make sure the get is complete
+				MPI_Win_fence(0, win);
 			}
 
 			stop_time = MPI_Wtime();
@@ -81,6 +80,10 @@ int main(int argc, char *argv[])
 			double avg_time_per_transfer = elapsed_time / (2.0*(double)loop_count);
 
 			printf("%10li\t%15.9f\n", num_B, avg_time_per_transfer);
+		}
+		else if (rank == 1) {
+			for(int i = 1; i <= 10 + 2*loop_count; i++)
+				MPI_Win_fence(0, win); 	// synchronize
 		}
 
 		MPI_Win_free(&win);
