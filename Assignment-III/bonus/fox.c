@@ -216,6 +216,8 @@ int main(int argc, char* argv[]) {
     if(rank == 0) {
         for(int src = 0; src < N; src++) {
             C_tiles[src] = (number_t*) malloc(m*m*sizeof(number_t));
+            if(C_tiles[src] == NULL) fail(7);
+
             MPI_Irecv(C_tiles[src], m*m, MPI_NUMBER_T, src, TAG_SYNC, MPI_COMM_WORLD, &requests[src]);
         }
     }
@@ -224,6 +226,9 @@ int main(int argc, char* argv[]) {
     mpi_matmul(M, s_N, rank, A, B);
 
     if(rank == 0) {
+        printf("--- A\n");
+        print_matrix(M, A);
+
         // output matrix
         number_t *C = (number_t*) malloc(M*M*sizeof(number_t));
         if(C == NULL) fail(5);
