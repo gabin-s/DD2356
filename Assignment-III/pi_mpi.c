@@ -24,6 +24,9 @@ int main(int argc, char* argv[])
     // unique seed for each rank
     srand(rank * SEED);
     
+    double start_time, stop_time, elapsed_time;
+	start_time = MPI_Wtime();
+
     // Calculate PI following a Monte Carlo method
     for (int iter = 0; iter < NUM_ITER / size; iter++)
     {
@@ -48,11 +51,15 @@ int main(int argc, char* argv[])
         // Estimate Pi and display the result
         pi = ((double)total_count / (double)NUM_ITER) * 4.0;
 
-        printf("The result is %f\n", pi);
     }
     else {
         MPI_Send(&local_count, 1, MPI_INT, /* dest */ 0, TAG, MPI_COMM_WORLD);
     }
+
+    stop_time = MPI_Wtime();
+    
+    if(rank == 0)
+        printf("pi=%f, t=%f\n", pi, stop_time - start_time);        
 
     MPI_Finalize();
     return 0;
