@@ -97,7 +97,7 @@ void tile_replace(int m, int s_N, int rank, number_t *dst, number_t *src) {
         memcpy(dst + offset + m*s_N*i, src + m*i, m*sizeof(number_t));
 }
 
-int mpi_matmul(int M, int s_N, int rank, number_t *A, number_t *B) {
+void mpi_matmul(int M, int s_N, int rank, number_t *A, number_t *B) {
     const int m = M / s_N;
     const int N = s_N * s_N;
 
