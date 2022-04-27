@@ -116,7 +116,7 @@ void mpi_matmul(int M, int s_N, int rank, number_t *A, number_t *B) {
     tile_copy(m, s_N, rank, B_tile, B);
 
     printf("r%d, m=%d, s_N=%d, A=%f, B=%f, C=%f\n", rank, m, s_N, *A_tile, *B_tile, *C_tile);
-    print_matrix(m, A);
+    print_matrix(m, A_tile);
 
     // create a new communicator for the row
     div_t colorkey = div(rank, s_N);
