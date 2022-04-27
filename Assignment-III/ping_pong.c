@@ -29,20 +29,20 @@ int main(int argc, char *argv[])
 		Loop from 8 B to 1 GB
 	--------------------------------------------------------------------------------------------*/
 
+	long int maxN = 1 << 27;
+	double *A = (double*)calloc(maxN, sizeof(double));  // send buffer
+
+	MPI_Win win;
+	MPI_Win_create(A, sizeof(double)*maxN, sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+
 	for(int i=0; i<=27; i++){
 		long int N = 1 << i;
 		int loop_count = 50;	
 
-		double *send = (double*)calloc(N, sizeof(double));  // send buffer
-		double *recv = (double*)malloc(N * sizeof(double)); // receive buffer
-
-		MPI_Win win;
-		MPI_Win_create(send, sizeof(double)*N, sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win);
-
 		// Warm-up loop
 		for(int i=1; i<=5; i++){
 			MPI_Win_fence(0, win);
-			MPI_Get(recv, N, MPI_DOUBLE, 1-rank,
+			MPI_Get(A, N, MPI_DOUBLE, 1-rank,
 					0, N, MPI_DOUBLE, win);
 			MPI_Win_fence(0, win);
 		}
@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 
 		for(int i=1; i<=loop_count; i++){	
 			MPI_Win_fence(0, win);
-			MPI_Get(recv, N, MPI_DOUBLE, 1-rank,
+			MPI_Get(A, N, MPI_DOUBLE, 1-rank,
 					0, N, MPI_DOUBLE, win);
 			MPI_Win_fence(0, win);
 		}
@@ -69,11 +69,11 @@ int main(int argc, char *argv[])
 		if(rank == 0)
 			printf("%10li\t%15.9f\n", num_B, avg_time_per_transfer);
 	
-		free(recv);
-		free(send);
-		MPI_Win_free(&win);
 	}
 
+	MPI_Win_free(&win);
+	free(A);
+	
 	MPI_Finalize();
 
 	return 0;
