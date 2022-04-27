@@ -211,9 +211,11 @@ int main(int argc, char* argv[]) {
     double start_time, stop_time, elapsed_time;
 
     number_t *C_tiles[N];
-    MPI_Request requests[N];
+    MPI_Request *requests;
 
     if(rank == 0) {
+        requests = malloc(N*sizeof(MPI_Request));
+
         for(int src = 0; src < N; src++) {
             C_tiles[src] = (number_t*) malloc(m*m*sizeof(number_t));
             if(C_tiles[src] == NULL) fail(7);
