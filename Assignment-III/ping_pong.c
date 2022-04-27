@@ -47,8 +47,8 @@ int main(int argc, char *argv[])
 		int loop_count = 50;
 		
 		MPI_Win win;
-		int sod = sizeof(double);
-		MPI_Win_create(A, sod*N, sod, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+		int soi = sizeof(int);
+		MPI_Win_create(A, soi*N, soi, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
 
 		// Warm-up loop
 		for(int i=1; i<=5; i++){
