@@ -48,7 +48,8 @@ int main(int argc, char *argv[])
 		
 		MPI_Win win;
 		int soi = sizeof(int);
-  		MPI_Win_create(A, soi*N, soi, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+		if(rank == 1)
+  			MPI_Win_create(A, soi*N, soi, MPI_INFO_NULL, MPI_COMM_WORLD, &win);
 
 		// Warm-up loop
 		for(int i=1; i<=5; i++){
@@ -80,6 +81,9 @@ int main(int argc, char *argv[])
 
 		if(rank == 0) printf("%10li\t%15.9f\n", num_B, avg_time_per_transfer);
 
+
+		if(rank == 1)
+			MPI_Win_free(&win);
 		free(A);
 	}
 
