@@ -30,15 +30,14 @@ int main(int argc, char *argv[])
 	--------------------------------------------------------------------------------------------*/
 
 	// Allocate memory for A on CPU
-	double *A = (double*)malloc((1 << 28)*sizeof(double));
+	double *A = (double*)malloc((1 << 27)*sizeof(double));
 	
 	// Initialize all elements of A to 0.0
-	for(int i=0; i<(1 << 28); i++){
+	for(int i=0; i<(1 << 27); i++){
 		A[i] = 0.0;
 	}
 
 	for(int i=0; i<=27; i++){
-		printf("%d\n", i);
 		long int N = 1 << i;
 	
 		int loop_count = 50;
