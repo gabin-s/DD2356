@@ -247,6 +247,7 @@ int main(int argc, char* argv[]) {
         elapsed_time = stop_time - start_time;
         printf("elapsed: %fs\n", elapsed_time);
 
+        /*
         number_t *C_brutal = (number_t*) malloc(M*M*sizeof(number_t));
         // brutal multiplication
         start_time = MPI_Wtime();
@@ -259,8 +260,10 @@ int main(int argc, char* argv[]) {
         int cmp = memcmp(C, C_brutal, M*M*sizeof(number_t));
         if(cmp)
             fprintf(stderr, "bad computation\n");
-       
+
         free(C_brutal);
+        */
+       
         free(C);
     }
 
