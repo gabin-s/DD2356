@@ -1,87 +1,15 @@
 #include <stdio.h>
 #include <string.h> /* For memset */ 
 #include <math.h>
-#include <sys/time.h>
 #include <stdlib.h>
-
-#define NO_OUT
-#define N_RUNS 100
+#include <sys/time.h>
 
 #define DIM 2
 #define X 0
 #define Y 1
-#define G 6.67430e-11
-#define delta_t 0.05
+#define G 6.673e-11
 
 typedef double vect_t[DIM];
-double* masses;
-
-vect_t *pos, *forces, *vel;
-
-void compute_force(int q) {
-    double x_diff, y_diff, dist, dist_cubed;
-    vect_t force_qk;
-
-    for(int k = 0; k < q; k++) {
-        x_diff = pos[q][X] - pos[k][X]; 
-        y_diff = pos[q][Y] - pos[k][Y]; 
-        dist = sqrt(x_diff*x_diff + y_diff*y_diff); 
-        dist_cubed = dist*dist*dist; 
-        force_qk[X] = G*masses[q]*masses[k]/dist_cubed * x_diff; 
-        force_qk[Y] = G*masses[q]*masses[k]/dist_cubed * y_diff;
-        forces[q][X] += force_qk[X]; 
-        forces[q][Y] += force_qk[Y]; 
-        forces[k][X] -= force_qk[X]; 
-        forces[k][Y] -= force_qk[Y]; 
-    }
-
-    pos[q][X] += delta_t*vel[q][X]; 
-    pos[q][Y] += delta_t*vel[q][Y]; 
-    vel[q][X] += delta_t/masses[q]*forces[q][X]; 
-    vel[q][Y] += delta_t/masses[q]*forces[q][Y];
-}
-
-void init_bodies(int n) {
-    pos      = malloc(n*sizeof(vect_t));
-    vel      = malloc(n*sizeof(vect_t));
-    forces   = malloc(n*sizeof(vect_t));
-    masses   = malloc(n*sizeof(double));
-
-    // initialize bodies
-    for(int q = 0; q < n; q++) {
-        pos[q][X] = (rand() / (double)(RAND_MAX)) * 2 - 1;
-        pos[q][Y] = (rand() / (double)(RAND_MAX)) * 2 - 1;
-
-        vel[q][X] = (rand() / (double)(RAND_MAX)) * 2 - 1;
-        vel[q][Y] = (rand() / (double)(RAND_MAX)) * 2 - 1;
-
-        masses[q] = fabs((rand() / (double)(RAND_MAX)) * 2 - 1);
-    }
-}
-
-void dump_pos_vel(int n) {
-    #ifndef NO_OUT
-    for (int q = 0; q < n; q++)
-        printf("%f,%f,%f,%f,", pos[q][X], pos[q][Y], vel[q][X], vel[q][Y]);
-               
-    printf("\n");
-    #endif
-}
-
-void nsolve(int n, int n_steps) {
-    // initialization
-    init_bodies(n);
-
-    // main loop
-    for (int step = 1; step <= n_steps; step++) { 
-        forces = memset(forces, 0, n*sizeof(vect_t));
-
-        for (int q = 0; q < n-1; q++) 
-            compute_force(q);
-
-        dump_pos_vel(n);
-    }
-}
 
 // function with timer                                                             
 double mysecond(){
@@ -93,47 +21,129 @@ double mysecond(){
   return ( (double) tp.tv_sec + (double) tp.tv_usec * 1.e-6 );
 }
 
+/**
+ * @brief Compute and stores in `forces` the force vectors for all particles.
+ * 
+ * @param N number of particles
+ * @param forces array where calculated force vectors will be stored
+ * @param pos position vector of all particles
+ * @param masses masses of all particles
+ */
+void compute_forces(int N, vect_t* forces, vect_t *pos, double* masses) {
+    double x_diff, y_diff, dist, dist_cubed;
+
+    // reset forces
+    memset(forces, 0, sizeof(double) * N);
+
+    vect_t force_qk;
+
+    for(int q = 0; q < N; q++) {
+#ifdef REDUCED
+        for(int k = q + 1; k < N; k++) {
+            x_diff = pos[q][X] - pos[k][X]; 
+            y_diff = pos[q][Y] - pos[k][Y]; 
+            dist = sqrt(x_diff*x_diff + y_diff*y_diff); 
+            dist_cubed = dist*dist*dist; 
+            force_qk[X] = G*masses[q]*masses[k]/dist_cubed * x_diff; 
+            force_qk[Y] = G*masses[q]*masses[k]/dist_cubed * y_diff;
+            forces[q][X] += force_qk[X]; 
+            forces[q][Y] += force_qk[Y]; 
+            forces[k][X] -= force_qk[X]; 
+            forces[k][Y] -= force_qk[Y]; 
+        }
+#else
+        for(int k = 0; k < N; k++) {
+            if(k == q) continue;
+
+            x_diff = pos[q][X] - pos[k][X];
+            y_diff = pos[q][Y] - pos[k][Y];
+            dist = sqrt(x_diff*x_diff + y_diff*y_diff);
+            dist_cubed = dist*dist*dist;
+            forces[q][X] -= G*masses[q]*masses[k]/dist_cubed * x_diff;
+            forces[q][Y] -= G*masses[q]*masses[k]/dist_cubed * y_diff;
+        }
+#endif
+    }
+}
+
+/**
+ * @brief Move all particles
+ * 
+ * @param N total number of particles
+ * @param delta_t the time delta used in the simulation
+ * @param vel velocity vectors for all particles
+ * @param forces force vectors for all particles
+ * @param masses masses of all particles
+ */
+void move_particles(int N, double dt, vect_t* pos,vect_t* vel, vect_t* forces, double* masses) {
+    for(int q = 0; q < N; q++) {
+        pos[q][X] += dt*vel[q][X]; 
+        pos[q][Y] += dt*vel[q][Y]; 
+        vel[q][X] += dt/masses[q]*forces[q][X]; 
+        vel[q][Y] += dt/masses[q]*forces[q][Y];
+    }
+}
+
+void init_random(int N, vect_t *pos, vect_t *vel, double *masses) {
+    for(int q = 0; q < N; q++) {
+        pos[q][X] = (rand() / (double)(RAND_MAX)) * 2 - 1;
+        pos[q][Y] = (rand() / (double)(RAND_MAX)) * 2 - 1;
+
+        vel[q][X] = (rand() / (double)(RAND_MAX)) * 2 - 1;
+        vel[q][Y] = (rand() / (double)(RAND_MAX)) * 2 - 1;
+
+        masses[q] = fabs((rand() / (double)(RAND_MAX)) * 2 - 1);
+    }
+}
+
+void print_usage(char* prgm_name) {
+    fprintf(stderr, "usage: %s <N> <dt> <n_steps>\n", prgm_name);
+}
+
 int main(int argc, char* argv[]) {
-    int n = 10;
-    int n_steps = 100;
+    int N, n_steps;
+    double dt; // time step
+    double t1, t2; // used for runtime measurement
 
-    if(argc > 1) n = atoi(argv[1]);
-    if(argc > 2) n_steps = atoi(argv[2]);
-    if(argc > 3) {
-        printf("usage: %s [n [n_steps]]\n", argv[0]);
-        return -1;
+    // parse arguments
+    if(argc != 4) {
+        print_usage(argv[0]);
+        return 1;
     }
+    N  = atoi(argv[1]);
+    dt = atof(argv[2]);
+    n_steps = atoi(argv[3]);
 
-    // cold start
-    nsolve(/* n */ n, /* n_steps */ n_steps);
-
-    double t0 = mysecond();
-    double times[N_RUNS];
-    for(int i = 0; i < N_RUNS; i++) {
-        nsolve(/* n */ n, /* n_steps */ n_steps);
-        times[i] = mysecond();
-    }
+    // allocate memory
+    vect_t* forces = malloc(N * sizeof(vect_t));
+    vect_t* vel    = malloc(N * sizeof(vect_t));
+    vect_t* pos    = malloc(N * sizeof(vect_t));
+    double* masses = malloc(N * sizeof(double));
     
-    double std = 0, mean = 0;
-    double min = 1000, max = 0;
-
-    double t = t0;
-    for(int i = 0; i < N_RUNS; i++) {
-        double dt = times[i] - t;
-        t = times[i];
-        printf("%f\n", dt);
-
-        if(dt < min) min = dt;
-        if(dt > max) max = dt;
-
-        mean += dt;
-        std  += dt*dt;
+    if(forces == NULL || vel == NULL || pos == NULL || masses == NULL) {
+        fprintf(stderr, "unable to allocate memory\n");
+        return 2;
     }
 
-    std  = sqrt((std - mean) / N_RUNS); 
-    mean = mean / N_RUNS;
+    t1 = mysecond();
 
-    printf("avg=%f, std=%f, min=%f, max=%f\n", mean, std, min, max);
+    // random initialization
+    init_random(N, pos, vel, masses);
+
+    // actual simulation
+    for(int step = 0; step <= n_steps; step++) {
+        compute_forces(N, forces, pos, masses);
+        move_particles(N, dt, pos, vel, forces, masses);
+    }
+
+    t2 = mysecond();
+    printf("Runtime: %f\n", t2 - t1);
+
+    // free memory
+    free(forces);
+    free(vel);
+    free(pos);
+    free(masses);
 
     return 0;
 }
