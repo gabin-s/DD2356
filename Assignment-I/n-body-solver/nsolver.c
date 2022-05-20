@@ -11,6 +11,8 @@
 
 typedef double vect_t[DIM];
 
+#define REDUCED
+
 // function with timer                                                             
 double mysecond(){
   struct timeval tp;
@@ -125,10 +127,10 @@ int main(int argc, char* argv[]) {
         return 2;
     }
 
-    t1 = mysecond();
-
     // random initialization
     init_random(N, pos, vel, masses);
+
+    t1 = mysecond();
 
     // actual simulation
     for(int step = 0; step <= n_steps; step++) {
